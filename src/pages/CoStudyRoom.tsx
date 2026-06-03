@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { store } from "../lib/store";
 import { motion, AnimatePresence } from "motion/react";
-import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Award } from "lucide-react";
+import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Award, Music, Volume2, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
-import { useSound } from "../hooks/useSound";
-import { triggerCelebration } from "../lib/celebration";
+import { Howl } from "howler";
 
 interface ActiveUser {
   id: string;
   name: string;
   status: "focusing" | "break";
   joinedAt: number;
+  task?: string;
 }
+
+const AMBIENT_SOUNDS = [
+  { id: "lofi", label: "Lo-Fi Beats", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // Placeholder for demo
+  { id: "rain", label: "Rainy Day", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
+];
 
 export default function CoStudyRoom() {
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
@@ -22,7 +27,10 @@ export default function CoStudyRoom() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [mode, setMode] = useState<"focus" | "break">("focus");
   const [cycles, setCycles] = useState(0);
-  const { click, success } = useSound();
+  const [task, setTask] = useState("");
+  const [sound, setSound] = useState<Howl | null>(null);
+  const [playingSound, setPlayingSound] = useState<string | null>(null);
+  
   const currentUser = store.getCurrentUser();
   const navigate = useNavigate();
 
@@ -36,7 +44,8 @@ export default function CoStudyRoom() {
     setDoc(userDocRef, {
       name: currentUser.name,
       status: mode === "focus" ? "focusing" : "break",
-      joinedAt: Date.now()
+      joinedAt: Date.now(),
+      task: task || "Đang học..."
     }).catch(console.error);
 
     // Listen to others
@@ -48,19 +57,35 @@ export default function CoStudyRoom() {
       setActiveUsers(users);
     });
 
-    // Cleanup when leaving component
     return () => {
       unsubsribe();
       deleteDoc(userDocRef).catch(console.error);
     };
-  }, [currentUser]);
+  }, [currentUser, mode]);
 
-  // Update status when timer mode changes
+  // Update task/status
   useEffect(() => {
     if (!currentUser) return;
     const userDocRef = doc(db, "costudy_room", currentUser.id);
-    updateDoc(userDocRef, { status: mode === "focus" ? "focusing" : "break" }).catch(e => console.error("Update status error", e));
-  }, [mode, currentUser]);
+    updateDoc(userDocRef, { 
+       status: mode === "focus" ? "focusing" : "break",
+       task: task || "Đang học..."
+    }).catch(e => console.error("Update error", e));
+  }, [mode, task, currentUser]);
+
+  const toggleSound = (soundId: string, url: string) => {
+    if (playingSound === soundId) {
+       sound?.stop();
+       setSound(null);
+       setPlayingSound(null);
+    } else {
+       sound?.stop();
+       const newSound = new Howl({ src: [url], loop: true, volume: 0.5 });
+       newSound.play();
+       setSound(newSound);
+       setPlayingSound(soundId);
+    }
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -69,13 +94,10 @@ export default function CoStudyRoom() {
         setTimeLeft(prev => prev - 1);
       }, 1000);
     } else if (isFocusing && timeLeft === 0) {
-      // Auto switch
-      success();
-      triggerCelebration();
       setIsFocusing(false);
       if (mode === "focus") {
         setMode("break");
-        setTimeLeft(5 * 60); // 5 min break
+        setTimeLeft(5 * 60); 
         setCycles(prev => prev + 1);
       } else {
         setMode("focus");
@@ -83,14 +105,12 @@ export default function CoStudyRoom() {
       }
     }
     return () => clearInterval(interval);
-  }, [isFocusing, timeLeft, mode, success]);
+  }, [isFocusing, timeLeft, mode]);
 
   const toggleTimer = () => {
-    click();
     setIsFocusing(!isFocusing);
   };
   const resetTimer = () => {
-    click();
     setIsFocusing(false);
     setTimeLeft(mode === "focus" ? 25 * 60 : 5 * 60);
   };
@@ -121,11 +141,20 @@ export default function CoStudyRoom() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 flex-1">
-        {/* Timer Panel */}
         <div className="md:col-span-2 glass rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute top-4 right-4 flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-3 py-1 rounded-full text-sm">
-              <Award className="w-4 h-4" /> <span>{cycles} Pomodoros</span>
-          </div>
+             
+           <div className="w-full max-w-sm mb-8 z-10">
+              <div className="flex items-center gap-2 bg-stone-200 dark:bg-zinc-900 rounded-xl p-2">
+                 <Target className="w-5 h-5 text-amber-600 ml-2" />
+                 <input 
+                    type="text" 
+                    value={task} 
+                    onChange={(e) => setTask(e.target.value)}
+                    placeholder="Mục tiêu tập trung..."
+                    className="bg-transparent border-none focus:ring-0 w-full font-bold"
+                 />
+              </div>
+           </div>
           
           <div className="z-10 flex gap-4 mb-12">
              <button 
@@ -175,12 +204,26 @@ export default function CoStudyRoom() {
           </div>
         </div>
 
-        {/* User Presence Panel */}
         <div className="glass rounded-3xl p-6 md:p-8 flex flex-col h-full">
            <h3 className="text-xl font-bold border-b border-amber-600/20 dark:border-amber-500/30 pb-4 mb-6 flex items-center justify-between">
               <span className="flex items-center gap-2"><Users className="w-5 h-5 text-amber-500" /> Hiện diện</span>
-              <span className="text-sm font-mono bg-amber-500/10 text-amber-700 dark:text-amber-400 px-3 py-1 rounded-full">{activeUsers.length} online</span>
            </h3>
+
+           <div className="space-y-4 mb-6">
+              <p className="text-sm font-bold opacity-70">Âm thanh tập trung</p>
+              <div className="grid grid-cols-2 gap-2">
+                 {AMBIENT_SOUNDS.map(s => (
+                    <button 
+                       key={s.id}
+                       onClick={() => toggleSound(s.id, s.url)}
+                       className={cn("flex items-center justify-center gap-2 p-3 rounded-xl border transition", playingSound === s.id ? "bg-amber-500 text-white border-amber-600" : "bg-stone-100 dark:bg-zinc-800 border-transparent")}
+                    >
+                       {playingSound === s.id ? <Volume2 className="w-4 h-4 animate-pulse" /> : <Music className="w-4 h-4" />}
+                       {s.label}
+                    </button>
+                 ))}
+              </div>
+           </div>
 
            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
               {activeUsers.map(user => (
@@ -195,24 +238,14 @@ export default function CoStudyRoom() {
                           {user.name.charAt(0)}
                        </div>
                        <div>
-                          <p className="font-bold text-sm">{user.name} {user.id === currentUser?.id ? "(Bạn)" : ""}</p>
-                          <p className="text-xs opacity-70 flex items-center gap-1 mt-0.5">
-                             <span className={cn("w-2 h-2 rounded-full", user.status === "focusing" ? "bg-amber-500 animate-pulse" : "bg-green-500")} />
-                             {user.status === "focusing" ? "Đang tập trung" : "Đang nghỉ ngơi"}
+                          <p className="font-bold text-sm">
+                            {user.name} {user.id === currentUser?.id ? "(Bạn)" : ""}
+                            <span className="block text-xs font-normal opacity-60">{user.task}</span>
                           </p>
                        </div>
                     </div>
                  </motion.div>
               ))}
-              {activeUsers.length === 0 && (
-                 <div className="text-center opacity-50 py-10">
-                    Chưa có ai trong phòng.
-                 </div>
-              )}
-           </div>
-           
-           <div className="mt-6 pt-4 border-t border-amber-600/20 dark:border-amber-500/30 text-xs opacity-60 text-center">
-             Những người dùng khác có mặt tại phòng này được cập nhật theo thời gian thực (Real-time).
            </div>
         </div>
       </div>
