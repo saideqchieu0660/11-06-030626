@@ -30,12 +30,14 @@ export default function StudyRoom() {
   const user = store.getCurrentUser();
   const { cooldownRemaining, startCooldown } = useAICooldown(user);
   const { deckId } = useParams();
-  const [deck, setDeck] = useState<any>(() => store.getDeck(deckId || ""));
+  const [deck, setDeck] = useState<any>(() => deckId === "daily-quest" ? null : store.getDeck(deckId || ""));
+  const [isLoading, setIsLoading] = useState(true);
   const [rawDeck, setRawDeck] = useState<any>(null);
   const [personalCardStates, setPersonalCardStates] = useState<any[]>([]);
 
   // 1. Listen to raw deck structure in real-time
   useEffect(() => {
+    setIsLoading(true);
     if (!deckId || !user) return;
     
     if (deckId === "daily-quest") {
@@ -47,6 +49,7 @@ export default function StudyRoom() {
              title: "Nhiệm vụ hôm nay (Theo Spaced Repetition)",
              cards: allCards
          });
+         setIsLoading(false);
          return;
     }
 
@@ -56,9 +59,11 @@ export default function StudyRoom() {
         if (docSnap.exists()) {
           setRawDeck(docSnap.data());
         }
+        setIsLoading(false);
       });
     } catch (e) {
       console.error("Failed to sync room deck in real-time:", e);
+      setIsLoading(false);
     }
     return () => unsubscribe();
   }, [deckId, user?.id]);
@@ -289,6 +294,7 @@ export default function StudyRoom() {
     else setIsMinimized(true);
   };
 
+  if (isLoading) return <div className="p-8 text-center text-stone-500">Đang tải phòng học...</div>;
   if (!deck) return <div>Deck not found</div>;
 
   const currentCard = studyQueue[currentIndex];
