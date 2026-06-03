@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useRef } from 'react';
 import { Award, Zap, Star, Shield, Cpu, Book, Flame, Calendar, Clock, Trophy, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
