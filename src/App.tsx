@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Link, Routes, Route, useNavigate } from "react-router-dom";
-import { Moon, Sun, LogOut, MessageCircle, Flame } from "lucide-react";
-import { motion } from "motion/react";
+import { Link, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Moon, Sun, LogOut, MessageCircle, Flame, Volume2, VolumeX } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { useTheme, ThemeProvider } from "./components/ThemeProvider";
+import { SoundProvider, useSoundContext } from "./components/SoundProvider";
 import { MarcusAureliusIcon } from "./components/MarcusAureliusIcon";
+import { Breadcrumbs } from "./components/Breadcrumbs";
 import AuthScreen from "./components/AuthScreen";
 import VerifyEmailScreen from "./components/VerifyEmailScreen";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -16,8 +18,20 @@ import { auth } from "./lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { store } from "./lib/store";
 
+const PageWrapper = ({ children }: { children: React.ReactNode }) => (
+    <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.3 }}
+    >
+        {children}
+    </motion.div>
+);
+
 function Layout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
+  const { isSoundEnabled, toggleSound } = useSoundContext();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -92,6 +106,10 @@ function Layout({ children }: { children: React.ReactNode }) {
           <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition">
             {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}
           </button>
+
+          <button onClick={toggleSound} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition">
+            {isSoundEnabled ? <Volume2 className="w-5 h-5 text-yellow-500" /> : <VolumeX className="w-5 h-5 text-stone-500" />}
+          </button>
           
           {user && (
             <div className="flex items-center gap-2 md:gap-4">
@@ -105,6 +123,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1 mt-24 mb-10 px-4 md:px-8 max-w-7xl mx-auto w-full">
+        <Breadcrumbs />
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -124,18 +143,22 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const location = useLocation();
+
   return (
     <ThemeProvider>
       <Layout>
-        <Routes>
-          <Route path="/" element={<AuthScreen />} />
-          <Route path="/verify" element={<VerifyEmailScreen />} />
-          <Route path="/dashboard" element={<StudentDashboard />} />
-          <Route path="/teacher" element={<TeacherDashboard />} />
-          <Route path="/study/:deckId" element={<StudyRoom />} />
-          <Route path="/co-study" element={<CoStudyRoom />} />
-          <Route path="/setup-profile" element={<SetupProfileScreen />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<PageWrapper><AuthScreen /></PageWrapper>} />
+            <Route path="/verify" element={<PageWrapper><VerifyEmailScreen /></PageWrapper>} />
+            <Route path="/dashboard" element={<PageWrapper><StudentDashboard /></PageWrapper>} />
+            <Route path="/teacher" element={<PageWrapper><TeacherDashboard /></PageWrapper>} />
+            <Route path="/study/:deckId" element={<PageWrapper><StudyRoom /></PageWrapper>} />
+            <Route path="/co-study" element={<PageWrapper><CoStudyRoom /></PageWrapper>} />
+            <Route path="/setup-profile" element={<PageWrapper><SetupProfileScreen /></PageWrapper>} />
+          </Routes>
+        </AnimatePresence>
       </Layout>
     </ThemeProvider>
   );
