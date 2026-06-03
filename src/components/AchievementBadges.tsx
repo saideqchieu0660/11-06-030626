@@ -1,7 +1,7 @@
-import React from 'react';
-import { Award, Zap, Star, Shield, Cpu, Book, Flame, Calendar, Clock, Trophy } from 'lucide-react';
+import { Award, Zap, Star, Shield, Cpu, Book, Flame, Calendar, Clock, Trophy, Share2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { AchievementToast } from './AchievementToast';
 
 export const AchievementBadges = ({ points, streak }: { points: number, streak: number }) => {
   const BADGES = [
@@ -15,6 +15,58 @@ export const AchievementBadges = ({ points, streak }: { points: number, streak: 
     { id: 'monthly_sage', name: 'Monthly Sage (30 ngày)', req: 30, icon: Calendar, color: 'text-amber-600', bg: 'bg-amber-500/20', isStreak: true },
     { id: 'century_master', name: 'Century Master (100 ngày)', req: 100, icon: Clock, color: 'text-red-600', bg: 'bg-red-500/20', isStreak: true },
   ];
+
+  const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
+  const prevUnlockedBadgeIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const newlyUnlocked: { id: string; message: string }[] = [];
+    BADGES.forEach((badge) => {
+      const val = badge.isStreak ? streak : points;
+      const unlocked = val >= badge.req;
+      if (unlocked && !prevUnlockedBadgeIds.current.has(badge.id)) {
+        newlyUnlocked.push({ id: badge.id, message: `Bạn đã đạt được huy hiệu: ${badge.name}! 🎉` });
+      }
+      if (unlocked) {
+        prevUnlockedBadgeIds.current.add(badge.id);
+      }
+    });
+
+    if (newlyUnlocked.length > 0) {
+      setToasts((prev) => [...prev, ...newlyUnlocked]);
+    }
+  }, [points, streak]);
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleShare = async (badgeName: string) => {
+    // Generate a simple stylized canvas image
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Background
+    ctx.fillStyle = '#f5f5f4'; // neutral-100
+    ctx.fillRect(0, 0, 400, 200);
+
+    // Text
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText(`Achievement: ${badgeName}`, 20, 100);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Check out my learning progress!', 20, 140);
+
+    // Download
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `${badgeName.replace(/\s+/g, '_')}_achievement.png`;
+    link.click();
+  };
 
   return (
     <div className="space-y-6">
@@ -52,11 +104,27 @@ export const AchievementBadges = ({ points, streak }: { points: number, streak: 
                   />
                 </div>
               )}
-              {unlocked && <span className="absolute top-2 right-2 text-emerald-500">✓</span>}
+              {unlocked && (
+                <>
+                  <span className="absolute top-2 right-2 text-emerald-500">✓</span>
+                  <button
+                    onClick={() => handleShare(badge.name)}
+                    className="absolute bottom-2 right-2 p-2 rounded-full bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 transition"
+                    title="Chia sẻ thành tựu"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </motion.div>
           );
         })}
       </div>
+      <AnimatePresence>
+        {toasts.map((toast) => (
+          <AchievementToast key={toast.id} message={toast.message} onDismiss={() => removeToast(toast.id)} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 };
