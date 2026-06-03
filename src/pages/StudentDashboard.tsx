@@ -51,7 +51,23 @@ const MOTIVATION_QUOTES = [
   "Virtue is nothing else than right reason. - Seneca",
   "We suffer more often in imagination than in reality. - Seneca",
   "Waste no more time arguing what a good man should be. Be one. - Marcus Aurelius",
-  "He who fears death will never do anything worth of a man who is alive. - Seneca"
+  "He who fears death will never do anything worth of a man who is alive. - Seneca",
+  "The impediment to action advances action. What stands in the way becomes the way. - Marcus Aurelius",
+  "It is not because things are difficult that we do not dare; it is because we do not dare that they are difficult. - Seneca",
+  "Well begun is half done. - Aristotle",
+  "Discipline is the bridge between goals and accomplishment. - Jim Rohn",
+  "The struggle you’re in today is developing the strength you need for tomorrow. - Robert Tew",
+  "If you want to live a happy life, tie it to a goal, not to people or things. - Albert Einstein",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
+  "It is better to conquer yourself than to win a thousand battles. - Buddha",
+  "Mastery is not a destination, but a journey of continuous improvement. - Unknown",
+  "Growth is painful. Change is painful. But nothing is as painful as staying stuck where you don't belong. - Mandy Hale",
+  "Your potential is endless. Go do what you were created to do. - Dharma Mittra",
+  "The secret of getting ahead is getting started. - Mark Twain",
+  "Persistence guarantees that results are inevitable. - Paramahansa Yogananda",
+  "Do what you can, with what you have, where you are. - Theodore Roosevelt",
+  "The master has failed more times than the beginner has even tried. - Stephen McCranie",
+  "Quality is not an act, it is a habit. - Aristotle"
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -78,6 +94,7 @@ export default function StudentDashboard() {
   if (!user) return <Navigate to="/" />;
 
   const [localDecks, setLocalDecks] = useState<Deck[]>(() => store.getDecks());
+  const [quote] = useState(() => MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)]);
   const decks = localDecks;
   
   const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups">("study");
@@ -712,7 +729,7 @@ export default function StudentDashboard() {
         </div>
         <div className="relative z-10">
           <h2 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-amber-500 to-yellow-600 dark:from-amber-200 dark:via-yellow-400 dark:to-amber-500 text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-amber-500 to-yellow-600 dark:from-amber-200 dark:via-yellow-400 dark:to-amber-500 mb-2">Salve, {user?.name}</h2>
-          <p className="font-roman text-lg italic opacity-80 mb-6">"Patience is the greatest of all virtues."</p>
+          <p className="font-roman text-lg italic opacity-80 mb-6 min-h-[3.5rem]">{quote}</p>
           <div className="flex flex-wrap items-center gap-4">
             <div className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 px-4 py-2 rounded-lg font-bold flex items-center gap-2 relative">
               <TrendingUp className="w-5 h-5" />
