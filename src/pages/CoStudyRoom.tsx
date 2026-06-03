@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { store } from "../lib/store";
 import { motion, AnimatePresence } from "motion/react";
-import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Award, Music, Volume2, Target } from "lucide-react";
+import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Award, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
-import { Howl } from "howler";
 
 interface ActiveUser {
   id: string;
@@ -16,11 +15,6 @@ interface ActiveUser {
   task?: string;
 }
 
-const AMBIENT_SOUNDS = [
-  { id: "lofi", label: "Lo-Fi Beats", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, // Placeholder for demo
-  { id: "rain", label: "Rainy Day", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
-];
-
 export default function CoStudyRoom() {
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [isFocusing, setIsFocusing] = useState(false);
@@ -28,8 +22,6 @@ export default function CoStudyRoom() {
   const [mode, setMode] = useState<"focus" | "break">("focus");
   const [cycles, setCycles] = useState(0);
   const [task, setTask] = useState("");
-  const [sound, setSound] = useState<Howl | null>(null);
-  const [playingSound, setPlayingSound] = useState<string | null>(null);
   
   const currentUser = store.getCurrentUser();
   const navigate = useNavigate();
@@ -63,7 +55,7 @@ export default function CoStudyRoom() {
     };
   }, [currentUser, mode]);
 
-  // Update task/status
+  // Update status/task
   useEffect(() => {
     if (!currentUser) return;
     const userDocRef = doc(db, "costudy_room", currentUser.id);
@@ -72,20 +64,6 @@ export default function CoStudyRoom() {
        task: task || "Đang học..."
     }).catch(e => console.error("Update error", e));
   }, [mode, task, currentUser]);
-
-  const toggleSound = (soundId: string, url: string) => {
-    if (playingSound === soundId) {
-       sound?.stop();
-       setSound(null);
-       setPlayingSound(null);
-    } else {
-       sound?.stop();
-       const newSound = new Howl({ src: [url], loop: true, volume: 0.5 });
-       newSound.play();
-       setSound(newSound);
-       setPlayingSound(soundId);
-    }
-  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -142,7 +120,6 @@ export default function CoStudyRoom() {
 
       <div className="grid md:grid-cols-3 gap-8 flex-1">
         <div className="md:col-span-2 glass rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
-             
            <div className="w-full max-w-sm mb-8 z-10">
               <div className="flex items-center gap-2 bg-stone-200 dark:bg-zinc-900 rounded-xl p-2">
                  <Target className="w-5 h-5 text-amber-600 ml-2" />
@@ -155,8 +132,8 @@ export default function CoStudyRoom() {
                  />
               </div>
            </div>
-          
-          <div className="z-10 flex gap-4 mb-12">
+
+           <div className="z-10 flex gap-4 mb-12">
              <button 
                 onClick={() => { setMode("focus"); setTimeLeft(25 * 60); setIsFocusing(false); }}
                 className={cn("px-6 py-2 rounded-full font-bold transition", mode === "focus" ? "bg-amber-600 text-white" : "bg-stone-200 dark:bg-zinc-800 opacity-60 hover:opacity-100")}
@@ -208,22 +185,6 @@ export default function CoStudyRoom() {
            <h3 className="text-xl font-bold border-b border-amber-600/20 dark:border-amber-500/30 pb-4 mb-6 flex items-center justify-between">
               <span className="flex items-center gap-2"><Users className="w-5 h-5 text-amber-500" /> Hiện diện</span>
            </h3>
-
-           <div className="space-y-4 mb-6">
-              <p className="text-sm font-bold opacity-70">Âm thanh tập trung</p>
-              <div className="grid grid-cols-2 gap-2">
-                 {AMBIENT_SOUNDS.map(s => (
-                    <button 
-                       key={s.id}
-                       onClick={() => toggleSound(s.id, s.url)}
-                       className={cn("flex items-center justify-center gap-2 p-3 rounded-xl border transition", playingSound === s.id ? "bg-amber-500 text-white border-amber-600" : "bg-stone-100 dark:bg-zinc-800 border-transparent")}
-                    >
-                       {playingSound === s.id ? <Volume2 className="w-4 h-4 animate-pulse" /> : <Music className="w-4 h-4" />}
-                       {s.label}
-                    </button>
-                 ))}
-              </div>
-           </div>
 
            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
               {activeUsers.map(user => (
