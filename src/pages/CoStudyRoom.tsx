@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { store } from "../lib/store";
-import { motion } from "framer-motion";
-import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Trophy } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
+import { useSound } from "../hooks/useSound";
 
 interface ActiveUser {
   id: string;
@@ -19,6 +20,8 @@ export default function CoStudyRoom() {
   const [isFocusing, setIsFocusing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [mode, setMode] = useState<"focus" | "break">("focus");
+  const [cycles, setCycles] = useState(0);
+  const { click, success } = useSound();
   const currentUser = store.getCurrentUser();
   const navigate = useNavigate();
 
@@ -64,24 +67,28 @@ export default function CoStudyRoom() {
       interval = setInterval(() => {
         setTimeLeft(prev => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (isFocusing && timeLeft === 0) {
       // Auto switch
+      success();
       setIsFocusing(false);
       if (mode === "focus") {
         setMode("break");
         setTimeLeft(5 * 60); // 5 min break
-        alert("Hết giờ! Bạn bè trong phòng khuyên bạn nên nghỉ giải lao một chút!");
+        setCycles(prev => prev + 1);
       } else {
         setMode("focus");
         setTimeLeft(25 * 60);
-        alert("Hết giờ nghỉ! Hãy quay lại tập trung nào!");
       }
     }
     return () => clearInterval(interval);
-  }, [isFocusing, timeLeft, mode]);
+  }, [isFocusing, timeLeft, mode, success]);
 
-  const toggleTimer = () => setIsFocusing(!isFocusing);
+  const toggleTimer = () => {
+    click();
+    setIsFocusing(!isFocusing);
+  };
   const resetTimer = () => {
+    click();
     setIsFocusing(false);
     setTimeLeft(mode === "focus" ? 25 * 60 : 5 * 60);
   };
@@ -114,8 +121,8 @@ export default function CoStudyRoom() {
       <div className="grid md:grid-cols-3 gap-8 flex-1">
         {/* Timer Panel */}
         <div className="md:col-span-2 glass rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5 dark:opacity-10 pointer-events-none">
-            <Clock className="w-64 h-64" />
+          <div className="absolute top-4 right-4 flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-3 py-1 rounded-full text-sm">
+              <Award className="w-4 h-4" /> <span>{cycles} Pomodoros</span>
           </div>
           
           <div className="z-10 flex gap-4 mb-12">

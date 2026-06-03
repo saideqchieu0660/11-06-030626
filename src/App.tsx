@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTheme, ThemeProvider } from "./components/ThemeProvider";
 import { SoundProvider, useSoundContext } from "./components/SoundProvider";
 import { MarcusAureliusIcon } from "./components/MarcusAureliusIcon";
+import { StreakDisplay } from "./components/StreakDisplay";
 import { Breadcrumbs } from "./components/Breadcrumbs";
 import AuthScreen from "./components/AuthScreen";
 import VerifyEmailScreen from "./components/VerifyEmailScreen";
@@ -88,10 +89,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         
         <div className="flex items-center gap-2 md:gap-4">
           {user && store.getCurrentUser()?.streak !== undefined && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-400 font-bold text-sm" title="Chuỗi ngày học liên tiếp">
-              <Flame className="w-4 h-4 fill-current animate-pulse" />
-              <span>{store.getCurrentUser()?.streak}</span>
-            </div>
+            <StreakDisplay />
           )}
           {user && (
             <a href="https://t.me/+O50q6ltXTzwxMzk1" target="_blank" rel="noopener noreferrer" 
