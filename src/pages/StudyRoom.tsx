@@ -30,7 +30,7 @@ export default function StudyRoom() {
   const user = store.getCurrentUser();
   const { cooldownRemaining, startCooldown } = useAICooldown(user);
   const { deckId } = useParams();
-  const [deck, setDeck] = useState<any>(() => deckId === "daily-quest" ? null : store.getDeck(deckId || ""));
+  const [deck, setDeck] = useState<any>(() => store.getDeck(deckId || ""));
   const [isLoading, setIsLoading] = useState(true);
   const [rawDeck, setRawDeck] = useState<any>(null);
   const [personalCardStates, setPersonalCardStates] = useState<any[]>([]);
@@ -40,18 +40,7 @@ export default function StudyRoom() {
     setIsLoading(true);
     if (!deckId || !user) return;
     
-    if (deckId === "daily-quest") {
-         const allDecks = store.getDecks();
-         // To make sure we have up-to-date offline data, we just parse from store
-         const allCards = allDecks.flatMap(d => (d.cards || []).map(c => ({...c, originDeckId: d.id, originDeckTitle: d.title })));
-         setRawDeck({
-             id: "daily-quest",
-             title: "Nhiệm vụ hôm nay (Theo Spaced Repetition)",
-             cards: allCards
-         });
-         setIsLoading(false);
-         return;
-    }
+    // Daily Quest logic removed
 
     let unsubscribe = () => {};
     try {
@@ -529,10 +518,7 @@ export default function StudyRoom() {
 
   const handleAddCard = async () => {
     if (!deck) return;
-    if (deck.id === "daily-quest") {
-      alert("Bạn không thể thêm thẻ mới trực tiếp vào Daily Quest. Hãy thêm vào một bộ thẻ cụ thể.");
-      return;
-    }
+    // Logic removed
     setIsUpdatingCard(true);
     try {
       const { db } = await import("../lib/firebase");

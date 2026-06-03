@@ -22,9 +22,7 @@ export default function TeacherDashboard() {
     return localStorage.getItem("admin_drive_folder_url") || "https://drive.google.com";
   });
   const [isEditingFolderUrl, setIsEditingFolderUrl] = useState(false);
-  const [pendingDecks, setPendingDecks] = useState<any[]>([]);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
-  const [successImportMsg, setSuccessImportMsg] = useState<string | null>(null);
 
   const [dbUsers, setDbUsers] = useState<any[]>([]);
   const [localDecks, setLocalDecks] = useState<any[]>(() => store.getDecks());
@@ -177,26 +175,7 @@ export default function TeacherDashboard() {
   const users = dbUsers.length > 0
     ? dbUsers.filter(u => u.role === "student" && u.status !== "disabled")
     : store.getUsers().filter(u => u.role === "student");
-
   const decks = localDecks;
-
-  const fetchPendingDecks = async () => {
-    try {
-      const res = await fetch("/api/agent1/pending-decks");
-      if (res.ok) {
-        const data = await res.json();
-        setPendingDecks(data.pendingDecks || []);
-      }
-    } catch (e) {
-      console.error("Failed to load pending drive decks:", e);
-    }
-  };
-
-  useEffect(() => {
-    fetchPendingDecks();
-    const interval = setInterval(fetchPendingDecks, 8000); // Polling every 8s
-    return () => clearInterval(interval);
-  }, []);
 
   const handleApprovePendingDeck = async (pDeck: any) => {
     setIsLoadingPending(true);
@@ -233,10 +212,6 @@ export default function TeacherDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: pDeck.id })
       });
-
-      setSuccessImportMsg(`Nhập thành công bộ học tập "${pDeck.title}"! (${pDeck.cards.length} thẻ)`);
-      setTimeout(() => setSuccessImportMsg(null), 4000);
-      fetchPendingDecks();
     } catch (err) {
       console.error("Failed to approve and save drive deck:", err);
       alert("Đã xảy ra lỗi khi đồng bộ và đăng tài liệu này.");
@@ -252,7 +227,6 @@ export default function TeacherDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: pDeckId })
       });
-      fetchPendingDecks();
     } catch (err) {
       console.error(err);
     }
@@ -575,28 +549,11 @@ export default function TeacherDashboard() {
 
           {/* MỚI: HỘP THƯ REVIEW INBOX CỦA GOOGLE DRIVE */}
           <section className="glass p-6 rounded-2xl space-y-4 border border-green-500/10">
-            <div className="flex justify-between items-center bg-stone-50 dark:bg-zinc-900 -m-6 mb-2 p-4 rounded-t-2xl border-b border-stone-150 dark:border-zinc-800">
-              <h3 className="text-sm font-bold flex items-center gap-1.5 text-stone-800 dark:text-stone-100">
-                <Inbox className="w-4 h-4 text-green-500" /> Nhập Thẻ Chờ Duyệt từ Drive ({pendingDecks.length})
-              </h3>
-              <button 
-                onClick={fetchPendingDecks}
-                className="p-1 px-2 text-[10px] bg-stone-200 dark:bg-zinc-800 hover:bg-stone-300 rounded font-bold flex items-center gap-1 transition"
-                title="Làm mới dữ liệu từ server"
-              >
-                <RefreshCw className="w-3 h-3" /> Làm mới
-              </button>
-            </div>
 
             <p className="text-xs opacity-70">
               Tài nguyên được upload ở Drive và chuyển đổi dạng thẻ bởi Agent 1 sẽ lưu trữ chờ bạn phê duyệt kích hoạt.
             </p>
 
-            {successImportMsg && (
-              <div className="bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-3 py-2 rounded-xl text-xs font-bold animate-in fade-in">
-                {successImportMsg}
-              </div>
-            )}
 
             {pendingDecks.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6 opacity-45 border-2 border-dashed border-stone-200 dark:border-zinc-800 rounded-xl space-y-1">

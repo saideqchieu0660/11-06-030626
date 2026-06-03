@@ -1049,33 +1049,6 @@ export default function StudentDashboard() {
                </div>
             </motion.div>
 
-            {/* LỘ TRÌNH HỌC TẬP ĐỘNG (DAILY QUESTS) */}
-            <motion.div 
-               initial={{ opacity: 0, y: -10 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="relative overflow-hidden rounded-2xl p-6 md:p-8 bg-gradient-to-r from-blue-600 to-indigo-500 shadow-xl"
-            >
-               <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                  <BookOpen className="w-40 h-40" />
-               </div>
-               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="space-y-2 text-white">
-                     <h3 className="text-2xl font-display font-bold flex items-center gap-2">
-                        <Sparkles className="w-6 h-6 text-yellow-300" /> Nhiệm vụ hôm nay (Daily Quest)
-                     </h3>
-                     <p className="opacity-90 max-w-md text-sm leading-relaxed">
-                        Lộ trình thông minh tự động trộn <strong className="text-yellow-200">20% thẻ mới</strong> và <strong className="text-yellow-200">80% thẻ ôn tập</strong> được gợi ý bằng thuật toán <strong className="font-mono text-xs bg-black/20 px-1 py-0.5 rounded">Spaced Repetition</strong>.
-                     </p>
-                  </div>
-                  <Link 
-                     to="/study/daily-quest"
-                     className="shrink-0 bg-white text-indigo-700 hover:bg-stone-50 font-bold px-6 py-3 rounded-xl shadow-lg transition hover:scale-105 active:scale-95 text-center flex items-center justify-center gap-2"
-                  >
-                     <Play className="w-5 h-5 fill-current" /> Bắt Đầu Quests
-                  </Link>
-               </div>
-            </motion.div>
-
             <div className="flex justify-between items-center flex-wrap gap-4">
               <h3 className="text-2xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-amber-500 to-yellow-600 dark:from-amber-200 dark:via-yellow-400 dark:to-amber-500 flex items-center gap-2">
                 <BookOpen className="w-6 h-6 text-yellow-500" /> Your Studies
