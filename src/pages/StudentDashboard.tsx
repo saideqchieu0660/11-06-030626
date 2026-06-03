@@ -14,6 +14,7 @@ import { MasteryBubbleChart } from "../components/MasteryBubbleChart";
 import { MasteryHeatmap } from "../components/MasteryHeatmap";
 import { SkillTreeGraph } from "../components/SkillTreeGraph";
 import { StudentBadges } from "../components/StudentBadges";
+import { AchievementBadges } from "../components/AchievementBadges";
 import { DeckList } from "../components/DeckList";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { useAICooldown } from "../lib/cooldown";
@@ -78,7 +79,7 @@ export default function StudentDashboard() {
   const [localDecks, setLocalDecks] = useState<Deck[]>(() => store.getDecks());
   const decks = localDecks;
   
-  const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups">("study");
+  const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups" | "achievements">("study");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 // Removed unused state
   const [muteAll, setMuteAll] = useState(() => getIsMuted());
@@ -789,6 +790,12 @@ export default function StudentDashboard() {
           <Network className="w-5 h-5" /> Skill Tree
         </button>
         <button 
+          onClick={() => setActiveTab("achievements")} 
+           className={cn("px-4 py-2 font-bold rounded-lg transition flex items-center gap-2", activeTab === "achievements" ? "bg-amber-600 text-white shadow-md relative z-10" : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5")}
+        >
+          <Trophy className="w-5 h-5" /> Thành Tựu
+        </button>
+        <button 
           onClick={() => setActiveTab("settings")} 
            className={cn("px-4 py-2 font-bold rounded-lg transition flex items-center gap-2", activeTab === "settings" ? "bg-zinc-800 dark:bg-zinc-200 text-white dark:text-black shadow-md" : "opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5")}
         >
@@ -805,6 +812,19 @@ export default function StudentDashboard() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
+      {activeTab === "achievements" && (
+          <motion.div 
+            key="achievements-tab"
+            initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+            transition={{ duration: 0.4 }}
+            className="glass p-8 rounded-2xl"
+          >
+             <AchievementBadges points={user?.points || 0} streak={user?.streak || 0} />
+          </motion.div>
+      )}
+
       {activeTab === "quiz" && (
           <ErrorBoundary fallback={<div className="p-8 bg-red-100/50 rounded-lg text-center dark:bg-red-900/10">Bài thi tạm thời không khả dụng do lỗi hệ thống AI. Vui lòng quay lại sau.</div>}>
           <motion.div 
