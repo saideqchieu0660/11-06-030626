@@ -44,6 +44,14 @@ export const AchievementBadges = ({ points, streak }: { points: number, streak: 
               <span className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                 {unlocked ? 'Đã đạt được!' : `Yêu cầu: ${badge.req} ${badge.isStreak ? 'ngày liên tiếp' : 'điểm'}`}
               </span>
+              {!unlocked && (
+                <div className="w-full bg-neutral-200 dark:bg-neutral-700 h-2 rounded-full mt-2 overflow-hidden">
+                  <div 
+                    className={cn("h-full rounded-full", badge.color.replace('text-', 'bg-'))} 
+                    style={{ width: `${Math.min(100, Math.max(0, ((badge.isStreak ? streak : points) / badge.req) * 100))}%` }} 
+                  />
+                </div>
+              )}
               {unlocked && <span className="absolute top-2 right-2 text-emerald-500">✓</span>}
             </motion.div>
           );
