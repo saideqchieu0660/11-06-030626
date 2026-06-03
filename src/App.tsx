@@ -1,0 +1,142 @@
+import React, { useState, useEffect } from "react";
+import { Link, Routes, Route, useNavigate } from "react-router-dom";
+import { Moon, Sun, LogOut, MessageCircle, Flame } from "lucide-react";
+import { motion } from "motion/react";
+import { useTheme, ThemeProvider } from "./components/ThemeProvider";
+import { MarcusAureliusIcon } from "./components/MarcusAureliusIcon";
+import AuthScreen from "./components/AuthScreen";
+import VerifyEmailScreen from "./components/VerifyEmailScreen";
+import StudentDashboard from "./pages/StudentDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import StudyRoom from "./pages/StudyRoom";
+import CoStudyRoom from "./pages/CoStudyRoom";
+import SetupProfileScreen from "./pages/SetupProfileScreen";
+import Agent3Widget from "./components/Agent3Widget";
+import { auth } from "./lib/firebase";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { store } from "./lib/store";
+
+function Layout({ children }: { children: React.ReactNode }) {
+  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        if (currentUser && !currentUser.isAnonymous && !currentUser.emailVerified) {
+          // Block access, sign out, redirect to verify
+          await signOut(auth);
+          store.logout();
+          setUser(null);
+          setIsAuthLoading(false);
+          const emailParams = currentUser.email ? `?email=${encodeURIComponent(currentUser.email)}` : "";
+          navigate(`/verify${emailParams}`);
+          return;
+        }
+
+        await store.setFirebaseUser(currentUser);
+        setUser(currentUser);
+        setIsAuthLoading(false);
+        if (!currentUser) {
+          if (window.location.pathname !== '/verify') {
+             navigate("/");
+          }
+        }
+      });
+    } catch (e) {
+      console.error("Auth state observer error:", e);
+      setIsAuthLoading(false);
+    }
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      store.logout();
+      navigate("/");
+    } catch (e) {
+      console.error("Error signing out:", e);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col font-sans transition-colors duration-300">
+      <header className="bg-black/[0.02] dark:bg-white/[0.03] border-b border-black/[0.05] dark:border-white/[0.08] dark:border-amber-500/30 border-amber-600/20 backdrop-blur-md shadow-[0_8px_32px_0_rgba(215,180,120,0.15)] dark:shadow-[inset_0_1px_1px_rgba(245,158,11,0.1),0_8px_32px_0_rgba(0,0,0,0.7)] text-stone-800 dark:text-stone-200 transition-all duration-500 ease-out fixed top-0 w-full z-50 px-4 md:px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MarcusAureliusIcon className="w-6 h-6 text-yellow-500" />
+          <span className="italic font-serif tracking-widest uppercase font-light text-xl md:text-2xl text-yellow-500">HENOSIS</span>
+        </div>
+        
+        <div className="flex items-center gap-2 md:gap-4">
+          {user && store.getCurrentUser()?.streak !== undefined && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-600 dark:text-orange-400 font-bold text-sm" title="Chuỗi ngày học liên tiếp">
+              <Flame className="w-4 h-4 fill-current animate-pulse" />
+              <span>{store.getCurrentUser()?.streak}</span>
+            </div>
+          )}
+          {user && (
+            <a href="https://t.me/+O50q6ltXTzwxMzk1" target="_blank" rel="noopener noreferrer" 
+               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/20 dark:border-amber-500/40 bg-amber-500/10 hover:bg-yellow-500 hover:text-black transition text-stone-800 dark:text-stone-200 font-medium text-xs md:text-sm"
+               title="Hỗ trợ (Telegram)">
+              <MessageCircle className="w-4 h-4 text-yellow-500" />
+              <span className="hidden sm:inline">Hỗ trợ Telegram</span>
+              <span className="inline sm:hidden">Hỗ trợ</span>
+            </a>
+          )}
+
+          <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition">
+            {theme === "dark" ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}
+          </button>
+          
+          {user && (
+            <div className="flex items-center gap-2 md:gap-4">
+              <span className="font-medium text-sm md:text-base hidden xs:inline">{user.email?.split("@")[0] || "User"}</span>
+              <button onClick={handleLogout} className="p-2 rounded-full hover:bg-red-500/10 text-red-500 transition" title="Đăng xuất">
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="flex-1 mt-24 mb-10 px-4 md:px-8 max-w-7xl mx-auto w-full">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          {isAuthLoading ? (
+              <div className="flex items-center justify-center p-20 mt-20">
+                <div className="w-8 h-8 rounded-full border-4 border-amber-500 border-t-transparent animate-spin" />
+              </div>
+          ) : children}
+        </motion.div>
+      </main>
+
+      {user && <Agent3Widget />}
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<AuthScreen />} />
+          <Route path="/verify" element={<VerifyEmailScreen />} />
+          <Route path="/dashboard" element={<StudentDashboard />} />
+          <Route path="/teacher" element={<TeacherDashboard />} />
+          <Route path="/study/:deckId" element={<StudyRoom />} />
+          <Route path="/co-study" element={<CoStudyRoom />} />
+          <Route path="/setup-profile" element={<SetupProfileScreen />} />
+        </Routes>
+      </Layout>
+    </ThemeProvider>
+  );
+}
