@@ -15,9 +15,10 @@ export const AchievementToast = ({ message, onDismiss }: ToastProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.9 }}
+      initial={{ opacity: 0, y: 100, rotateX: 45 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0 }}
+      exit={{ opacity: 0, scale: 0.5, y: 50 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-amber-500 text-white p-4 rounded-xl shadow-lg border-2 border-amber-400"
     >
       <Trophy className="w-6 h-6" />

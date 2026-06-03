@@ -81,13 +81,19 @@ export const AchievementBadges = ({ points, streak }: { points: number, streak: 
           return (
             <motion.div
               key={badge.id}
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.4 }}
+              initial={{ opacity: 0, scale: 0.7, rotateX: -20 }}
+              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 15,
+                delay: index * 0.05,
+                duration: 0.5
+              }}
               className={cn(
                 "flex flex-col items-center p-4 rounded-2xl border text-center transition-all duration-300 relative",
                 unlocked 
-                  ? `${badge.bg} border-${badge.color.replace('text-', '')}/30 shadow-md hover:scale-105` 
+                  ? `${badge.bg} border-${badge.color.replace('text-', '')}/30 shadow-md hover:scale-105 perspective-1000` 
                   : "bg-neutral-100 dark:bg-neutral-800/50 border-transparent opacity-50 grayscale"
               )}
             >
