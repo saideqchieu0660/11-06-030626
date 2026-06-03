@@ -746,6 +746,12 @@ export default function StudentDashboard() {
       )}
 
       {activeTab !== "quiz" && (
+         <div className="md:px-2">
+            <StudentBadges points={user?.points || 0} streak={user?.streak || 0} />
+         </div>
+      )}
+
+      {activeTab !== "quiz" && (
       <motion.div 
         key="tab-nav"
         initial={{ opacity: 0, y: -10 }}
@@ -1369,7 +1375,6 @@ export default function StudentDashboard() {
               </div>
             </section>
             
-            <StudentBadges points={user?.points || 0} streak={user?.streak || 0} />
           </aside>
         </motion.div>
       )}
