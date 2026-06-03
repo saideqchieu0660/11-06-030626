@@ -7,6 +7,7 @@ import { Users, Clock, ArrowLeft, Play, Pause, RefreshCw, Award } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
 import { useSound } from "../hooks/useSound";
+import { triggerCelebration } from "../lib/celebration";
 
 interface ActiveUser {
   id: string;
@@ -70,6 +71,7 @@ export default function CoStudyRoom() {
     } else if (isFocusing && timeLeft === 0) {
       // Auto switch
       success();
+      triggerCelebration();
       setIsFocusing(false);
       if (mode === "focus") {
         setMode("break");

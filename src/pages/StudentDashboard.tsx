@@ -18,6 +18,7 @@ import { DeckList } from "../components/DeckList";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { useAICooldown } from "../lib/cooldown";
 import { useSound } from "../hooks/useSound";
+import { triggerCelebration } from "../lib/celebration";
 
 function AnimatedCounter({ value }: { value: number }) {
   const count = useMotionValue(0);
@@ -31,43 +32,7 @@ function AnimatedCounter({ value }: { value: number }) {
   return <motion.span>{rounded}</motion.span>;
 }
 
-const Confetti = () => {
-  const colors = ['#fde047', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#fb923c'];
-  const pieces = Array.from({ length: 40 }).map((_, i) => ({
-    id: i,
-    x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-    color: colors[Math.floor(Math.random() * colors.length)],
-    size: Math.random() * 8 + 6,
-    duration: 2.0 + Math.random() * 2,
-    delay: Math.random() * 0.5,
-    rotation: Math.random() * 720
-  }));
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[200] overflow-hidden">
-      {pieces.map(p => (
-        <motion.div
-            key={p.id}
-            initial={{ y: -20, x: p.x, opacity: 1, rotate: 0 }}
-            animate={{ 
-              y: typeof window !== 'undefined' ? window.innerHeight + 100 : 1000, 
-              x: p.x + (Math.random() - 0.5) * 300, 
-              rotate: p.rotation,
-              opacity: [1, 1, 0]
-            }}
-            transition={{ duration: p.duration, delay: p.delay, ease: "easeOut" }}
-            style={{
-              position: 'absolute',
-              width: p.size,
-              height: p.size,
-              backgroundColor: p.color,
-              borderRadius: Math.random() > 0.5 ? '50%' : 0,
-            }}
-          />
-      ))}
-    </div>
-  );
-};
+// Confetti component removed
 
 type QuizQuestion = {
   cardId?: string;
@@ -115,7 +80,7 @@ export default function StudentDashboard() {
   
   const [activeTab, setActiveTab] = useState<"study" | "ranking" | "quiz" | "mock_exam_setup" | "settings" | "history" | "skill_tree" | "all_sets" | "groups">("study");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showStreakConfetti, setShowStreakConfetti] = useState(false);
+// Removed unused state
   const [muteAll, setMuteAll] = useState(() => getIsMuted());
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
@@ -350,8 +315,7 @@ export default function StudentDashboard() {
        const key = `last_streak_${user.id}`;
        const oldStreak = parseInt(sessionStorage.getItem(key) || "0", 10);
        if (user.streak && user.streak > oldStreak) {
-          setShowStreakConfetti(true);
-          setTimeout(() => setShowStreakConfetti(false), 5000);
+          triggerCelebration();
        }
        sessionStorage.setItem(key, (user.streak || 0).toString());
     }
@@ -715,7 +679,6 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-8 animate-in fade-in pb-12 relative">
-      {showStreakConfetti && <Confetti />}
       {/* Thêm Toast Thông báo Toast Thành Công */}
       {joinStatus && (
           <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-2xl animate-in slide-in-from-right-8 font-bold flex items-center gap-3">
@@ -1406,7 +1369,7 @@ export default function StudentDashboard() {
               </div>
             </section>
             
-            <StudentBadges points={user?.points || 0} />
+            <StudentBadges points={user?.points || 0} streak={user?.streak || 0} />
           </aside>
         </motion.div>
       )}

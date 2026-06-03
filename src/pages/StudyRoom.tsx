@@ -9,6 +9,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { motion } from "motion/react";
+import { triggerCelebration } from "../lib/celebration";
 import { v4 as uuidv4 } from "uuid";
 import { db, auth } from "../lib/firebase";
 import { doc, onSnapshot, collection } from "firebase/firestore";
@@ -23,43 +24,7 @@ const MOTIVATION_QUOTES = [
   "Luck is what happens when preparation meets opportunity. - Seneca"
 ];
 
-const Confetti = () => {
-  const colors = ['#fde047', '#3b82f6', '#ef4444', '#22c55e', '#a855f7'];
-  const pieces = Array.from({ length: 80 }).map((_, i) => ({
-    id: i,
-    x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-    color: colors[Math.floor(Math.random() * colors.length)],
-    size: Math.random() * 8 + 6,
-    duration: 2.5 + Math.random() * 3,
-    delay: Math.random() * 0.5,
-    rotation: Math.random() * 720
-  }));
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-      {pieces.map(p => (
-        <motion.div
-            key={p.id}
-            initial={{ y: -20, x: p.x, opacity: 1, rotate: 0 }}
-            animate={{ 
-              y: typeof window !== 'undefined' ? window.innerHeight + 100 : 1000, 
-              x: p.x + (Math.random() - 0.5) * 300, 
-              rotate: p.rotation,
-              opacity: [1, 1, 0]
-            }}
-            transition={{ duration: p.duration, delay: p.delay, ease: "easeOut" }}
-            style={{
-              position: 'absolute',
-              width: p.size,
-              height: p.size,
-              backgroundColor: p.color,
-              borderRadius: Math.random() > 0.5 ? '50%' : 0,
-            }}
-          />
-      ))}
-    </div>
-  );
-};
+// Confetti component removed
 
 export default function StudyRoom() {
   const user = store.getCurrentUser();
@@ -161,6 +126,10 @@ export default function StudyRoom() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [finished, setFinished] = useState(false);
+
+  useEffect(() => {
+     if (finished) triggerCelebration();
+  }, [finished]);
   const [sessionCorrectCount, setSessionCorrectCount] = useState(0);
   const [sessionMasteryGained, setSessionMasteryGained] = useState(0);
   const [sessionHistory, setSessionHistory] = useState<Array<{
@@ -665,7 +634,6 @@ export default function StudyRoom() {
 
     return (
       <div className="flex items-center justify-center min-h-[80vh] py-8 animate-in zoom-in-95 duration-500 px-4">
-        <Confetti />
         <div className="glass p-6 md:p-10 rounded-3xl max-w-5xl w-full space-y-8 relative z-10">
           
           {/* Header Section */}
